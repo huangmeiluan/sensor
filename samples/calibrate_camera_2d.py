@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 
 from samples.utils.pose_detector import PoseDetector, CalibBoardType
-from samples.utils.accuracy import compute_accuracy
 from samples.utils.common import get_common_parse
 from IPython import embed
+from sensor.sensor_base import SensorType
 from src.sensor.sensor_manager import SensorManager
 import sys
 from RVBUST import Vis
@@ -21,7 +21,9 @@ def calibrate_camera_2d(src_image_pts_list, src_obj_pts, image_shape) -> Tuple[b
         obj_pts, image_pts_list.shape[0], axis=0).astype(np.float32)
     ret, intrinsic_matrix, dist_coeff, rvecs, tvecs = cv2.calibrateCamera(
         obj_pts_list, image_pts_list, image_shape, None, None)
-    return ret, intrinsic_matrix, dist_coeff
+    dist_coeff_rv = np.array(
+        [dist_coeff[0], dist_coeff[1], dist_coeff[4], dist_coeff[2], dist_coeff[3]])
+    return ret, intrinsic_matrix, dist_coeff_rv
 
 
 if __name__ == "__main__":
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     sn_list = [args.sn]
 
     sensor_manager = SensorManager(config_sensor_path)
-    sensor_manager.list_device()
+    sensor_manager.list_device(list_sensor_type=SensorType.Hik_2D)
     flag = sensor_manager.open(sn_list=[sn])
     if not flag:
         sys.exit()

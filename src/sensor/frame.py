@@ -16,7 +16,7 @@ class Frame:
         self.image = image
         self.extrinsic_matrix = np.eye(4)
         self.intrinsic_matrix = np.eye(3)
-        self.distortion = np.zeros((5, ))
+        self.distortion = np.zeros((5, ))  # k1, k2, k3, p1, p2
         self.pose = pose
         self.mask = None
         self.normals = None
