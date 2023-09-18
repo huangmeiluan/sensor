@@ -93,7 +93,8 @@ if __name__ == "__main__":
                 print(
                     f"detect caliboard pose of sn == {sensor.param.sn} failed")
 
-            valid_pcd = frame.get_transform_pm(T_b_w=new_pose)
+            valid_pcd = frame.get_transform_pm(
+                T_b_w=new_pose @ np.linalg.inv(frame.pose))
             handle_src = v.Point(valid_pcd.flatten(), 1, [0.5, 0.5, 0.5])
 
             win_name = f"{sensor.param.sensor_name}_{sensor.param.sn}"
