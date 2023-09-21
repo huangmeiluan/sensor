@@ -2,58 +2,7 @@ import numpy as np
 import cv2
 from IPython import embed
 from scipy.spatial import KDTree
-
-
-class CircleDetectorParams:
-    def __init__(self) -> None:
-        self.min_circle_radius_pixel = 10
-        self.max_circle_raidius_pixel = 100
-        self.min_circularity = 0.6
-
-        self.adaptive_mathod = cv2.ADAPTIVE_THRESH_MEAN_C
-        self.adaptive_block_radius_pixel = 100  # circle center distance is recommend
-        self.adaptive_C = -10
-
-
-class CircleDetector:
-    def __init__(self, param=CircleDetectorParams()) -> None:
-        self.param = param
-
-    def detect(self, image):
-        if len(image.shape) == 3:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        binary_image = cv2.adaptiveThreshold(image, 255, self.param.adaptive_mathod, cv2.THRESH_BINARY,
-                                             self.param.adaptive_block_radius_pixel * 2 + 1, self.param.adaptive_C)
-
-        contours, _ = cv2.findContours(
-            binary_image, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-        circle_centers = []
-        circle_radius_list = []
-
-        min_contour_length = 2 * np.pi * self.param.min_circle_radius_pixel
-        max_contour_length = 2 * np.pi * self.param.max_circle_raidius_pixel * 2
-        min_contour_area = np.pi * self.param.min_circle_radius_pixel**2
-        max_contour_area = np.pi * self.param.max_circle_raidius_pixel**2
-
-        for contour in contours:
-            contour_length = len(contour)
-            if contour_length < min_contour_length or contour_length > max_contour_length:
-                continue
-
-            area = cv2.contourArea(contour)
-            if area < min_contour_area or area > max_contour_area:
-                continue
-
-            center, radius = cv2.minEnclosingCircle(contour)
-            circularity = area / (np.pi * radius**2)
-            if circularity < self.param.min_circularity:
-                continue
-
-            circle_centers.append(center)
-            circle_radius_list.append(radius)
-        circle_centers = np.array(circle_centers)
-        circle_radius_list = np.array(circle_radius_list)
-        return circle_centers, circle_radius_list, binary_image
+from samples.utils.find_key_point_2d import CircleDetector, CircleDetectorParams
 
 
 def find_image_points_rvmxn(image, pattern_per_rows, pattern_per_cols, circle_detect_param=CircleDetectorParams()):
