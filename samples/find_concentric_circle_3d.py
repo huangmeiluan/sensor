@@ -1,10 +1,10 @@
-from samples.utils.find_key_point_2d import ConcentricCircleDetector, ConcentricCircleDetectorParams
+from src.tools.find_key_point_2d import ConcentricCircleDetector, ConcentricCircleDetectorParams
 import numpy as np
 from src.sensor.frame import Frame
 from typing import Tuple
 import cv2
 import copy
-from samples.utils.geometry import intersect_l2p
+from src.tools.geometry import intersect_l2p
 
 
 class ConcentricCircleDetectorParams_3d(ConcentricCircleDetectorParams):
@@ -79,7 +79,7 @@ class ConcentricCircleDetector_3d(ConcentricCircleDetector):
 
 if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager
-    from samples.utils.common import get_common_parse
+    from src.tools.common import get_common_parse
     from RVBUST import Vis
     import sys
     from IPython import embed

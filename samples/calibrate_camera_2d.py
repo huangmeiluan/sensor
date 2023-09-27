@@ -2,8 +2,8 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-from samples.utils.pose_detector import PoseDetector, CalibBoardType
-from samples.utils.common import get_common_parse
+from src.tools.pose_detector import PoseDetector, CalibBoardType
+from src.tools.common import get_common_parse
 from IPython import embed
 from sensor.sensor_base import SensorType
 from src.sensor.sensor_manager import SensorManager

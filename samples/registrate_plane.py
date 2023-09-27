@@ -3,7 +3,7 @@ import numpy as np
 import open3d as o3d
 import sys
 import os
-from samples.utils.common import get_common_parse
+from src.tools.common import get_common_parse
 
 
 def segment_plane(pcd, distance_threshold_mm, num_iteration=30):
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     import json
     from RVBUST import Vis
     import sys
-    from samples.utils.visualization import draw_plane
+    from src.tools.visualization import draw_plane
     from IPython import embed
     from src.sensor.sensor_manager import SensorManager
 
@@ -73,13 +73,13 @@ if __name__ == "__main__":
             handle_src = v.Point(valid_pcd.flatten(), 1, [0.5, 0.5, 0.5])
 
             plane_center, plane_normal = segment_plane(valid_pcd, 10)
+            if np.dot(plane_normals_direction, plane_normal) < 0:
+                plane_normal *= -1
 
             crop_by_plane = config_sensor[sn]["post_process_config"]["crop_by_plane"]
             crop_by_plane["plane_center_mm"] = plane_center.tolist()
             crop_by_plane["plane_normal"] = plane_normal.tolist()
 
-            if np.dot(plane_normals_direction, plane_normal) < 0:
-                plane_normal *= -1
             handle_plane = draw_plane(
                 v, plane_normal, plane_center, xLength=3000, yLength=3000)
             handle_plane_lower = draw_plane(

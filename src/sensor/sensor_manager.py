@@ -20,6 +20,7 @@ class SensorManager:
     def update_sensor_config(self, config_sensor_file):
         with open(config_sensor_file, 'r') as f:
             self.config_sensor = json.load(f)
+        self.update_param()
 
     def update_param(self):
         for sn in self.sensor_dict:

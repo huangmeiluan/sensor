@@ -1,10 +1,10 @@
 import copy
 from src.sensor.frame import Frame
 from IPython import embed
-from samples.utils.optimization import compute_rigid_transform
-from samples.utils.geometry import to_plane_coeff, intersect_l2p
-from samples.utils.generate_obj_points import generate_obj_points_rvmxn
-from samples.utils.find_image_points import find_image_points_rvmxn, CircleDetectorParams
+from src.tools.optimization import compute_rigid_transform
+from src.tools.geometry import to_plane_coeff, intersect_l2p
+from src.tools.generate_obj_points import generate_obj_points_rvmxn
+from src.tools.find_image_points import find_image_points_rvmxn, CircleDetectorParams
 from enum import Enum
 import numpy as np
 import cv2
@@ -117,14 +117,14 @@ class PoseDetector:
             ret = False
         return ret, T_obj_2_cam, image_pts, detected_obj_pts
 
-    def draw(self, frame: Frame, image_pts=None, pose=None, axis_ratio=1) -> np.ndarray:
+    def draw(self, frame: Frame, image_pts=None, pose=None, axis_ratio=1, pattern_was_found=True) -> np.ndarray:
         image = frame.image
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
         if image_pts is not None:
             cv2.drawChessboardCorners(
-                image, (self.pattern_per_rows, self.pattern_per_cols), image_pts, True)
-            if pose is not None:
+                image, (self.pattern_per_rows, self.pattern_per_cols), image_pts, pattern_was_found)
+            if pattern_was_found and pose is not None:
                 axis = np.float32([[self.circle_center_distance_mm * axis_ratio, 0, 0],
                                    [0, self.circle_center_distance_mm * axis_ratio, 0],
                                    [0, 0, self.circle_center_distance_mm * axis_ratio]]).reshape(-1, 3)

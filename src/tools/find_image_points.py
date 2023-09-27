@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 from IPython import embed
 from scipy.spatial import KDTree
-from samples.utils.find_key_point_2d import CircleDetector, CircleDetectorParams
+from src.tools.find_key_point_2d import CircleDetector, CircleDetectorParams
 
 
 def find_image_points_rvmxn(image, pattern_per_rows, pattern_per_cols, circle_detect_param=CircleDetectorParams()):

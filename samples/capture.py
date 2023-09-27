@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from samples.utils.common import get_common_parse
+from src.tools.common import get_common_parse
 
 from RVBUST import Vis
 import sys

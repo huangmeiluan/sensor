@@ -116,7 +116,7 @@ class SensorBase:
                 param = post_process_config[key]
                 if param.get("enable", True):
                     frame.normals, curvature = cv2.estimatePointMapNormal(
-                        frame.pm, frame.mask, param["search_radius_pixel"], param["distance_threshold_mm"])
+                        frame.pm, frame.mask, param["distance_threshold_mm"], param["search_radius_pixel"])
                     frame.normals[frame.normals[:, :, 2] < 0] *= -1
             t1 = time.time()
             print(f"{key} times(s): {t1 - t0}")
