@@ -57,7 +57,7 @@ class HandEyeCalibrateManager_2d:
         ret, image_pts = self.pose_detector.find_image_points(image)
         if ret:
             position_infos = PositionInfos_2d(
-                image_points=image_pts, pose_robot_end=pose_robot_end, image=copy.deepcopy(image))
+                image_points=image_pts, T_end_2_base=pose_robot_end, image=copy.deepcopy(image))
             self.position_infos_list.append(position_infos)
 
             self._image_shape = image.shape
@@ -83,17 +83,24 @@ class HandEyeCalibrateManager_2d:
             image_pts_list = [
                 position_infos.image_points for position_infos in self.position_infos_list]
             ret, intrinsic_matrix, dist_coeff_rv = self._calibrate_camera_2d(
-                image_pts_list, self.pose_detector.obj_pts, self.image_shape)
+                image_pts_list, self.pose_detector.obj_pts, self._image_shape)
         elif intrinsic_matrix is None or dist_coeff_rv is None:
             raise ValueError(
                 f"intrinsic_matrix and dist_coeff_rv cannot be None when calib_sensor is False")
+        frame = Frame()
+        frame.distortion = dist_coeff_rv
+        frame.intrinsic_matrix = intrinsic_matrix
         calib_pose_list = []
         for position_infos in self.position_infos_list:
             image_pts = position_infos.image_points
-            ret, T_obj_2_cam, _, _ = self.pose_detector.compute_obj_pose(
-                image_pts, use_pnp=True)
+            ret, rvec, tvec = cv2.solvePnP(
+                self.pose_detector.obj_pts, image_pts, frame.intrinsic_matrix, frame.distortion_cv)
             if not ret:
                 return False, intrinsic_matrix, dist_coeff_rv, hand_eye_result
+            R, _ = cv2.Rodrigues(rvec)
+            T_obj_2_cam = np.eye(4)
+            T_obj_2_cam[:3, :3] = R
+            T_obj_2_cam[:3, 3] = tvec[:, 0]
             calib_pose_list.append(T_obj_2_cam)
 
         T_gripper_2_base = np.array(
