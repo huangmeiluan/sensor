@@ -23,7 +23,8 @@ if __name__ == "__main__":
         'q': quit, \
         's': save config, \
         'f': (save as) file camera, \
-        'b': (set as) base pose")
+        'b': (set as) base pose, \
+        'p': plane (crop_by_plane)")
     parse.add_argument("circle_center_distance_mm",
                        help="the distance of circle center", type=float)
     args = parse.parse_args()
@@ -106,6 +107,22 @@ if __name__ == "__main__":
                 frame = sensor.status.frame
                 frame.pose = frame_pose_dict[sn]
                 print("set sensor: {sn} base pose")
+        if key == 'p':  # plane (crop_by_plane)
+            for sn in sn_list:
+                sensor = sensor_manager.sensor_dict[sn]
+                T_calib_2_cam = obj_pose
+                T_pcd_2_cam = frame.extrinsic_matrix
+                T_calib_2_pcd = np.linalg.inv(T_pcd_2_cam) @ T_calib_2_cam
+
+                post_process_config = sensor.param.post_process_config
+                if "crop_by_plane" not in post_process_config:
+                    post_process_config["crop_by_plane"] = {}
+                    post_process_config["crop_by_plane"]["crop_distance_range_mm"] = [
+                        5, 1000]
+                post_process_config["crop_by_plane"]["plane_center_mm"] = T_calib_2_pcd[:3, 3].tolist(
+                )
+                post_process_config["crop_by_plane"]["plane_normal"] = T_calib_2_pcd[:3, 2].tolist(
+                )
         if key == 's':  # save config
             for sn in sn_list:
                 sensor = sensor_manager.sensor_dict[sn]
