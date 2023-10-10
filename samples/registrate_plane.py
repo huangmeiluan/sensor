@@ -26,31 +26,34 @@ if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager
 
     parse = get_common_parse(
-        "registrate sensor plane, use for crop_by_plane function")
+        "registrate sensor plane, use for crop_by_plane function \
+        focus on image window and press: \
+        'e': embed, \
+        'q': quit, \
+        's': save config, \
+        'f': (save as) file camera")
     args = parse.parse_args()
 
-    sn = args.sn
     config_sensor_path = args.config_sensor_path
-    sensor_name = args.sensor_name
 
-    sn_list = [sn]
+    sn_list = args.sn_list
     sensor_manager = SensorManager(config_sensor_path)
 
     config_sensor = sensor_manager.config_sensor
     # update crop_by_plane
-    if sn not in config_sensor:
-        config_sensor[sn] = {}
-    if "post_process_config" not in config_sensor[sn]:
-        config_sensor[sn]["post_process_config"] = {}
-    if "crop_by_plane" not in config_sensor[sn]["post_process_config"]:
-        config_sensor[sn]["post_process_config"]["crop_by_plane"] = {}
-        config_sensor[sn]["post_process_config"]["crop_by_plane"]["crop_distance_range_mm"] = [
-            0, 1000]
-    config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = False
-    config_sensor[sn]["sensor_name"] = sensor_name
+    for sn in sn_list:
+        if sn not in config_sensor:
+            config_sensor[sn] = {}
+        if "post_process_config" not in config_sensor[sn]:
+            config_sensor[sn]["post_process_config"] = {}
+        if "crop_by_plane" not in config_sensor[sn]["post_process_config"]:
+            config_sensor[sn]["post_process_config"]["crop_by_plane"] = {}
+            config_sensor[sn]["post_process_config"]["crop_by_plane"]["crop_distance_range_mm"] = [
+                0, 1000]
+        config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = False
 
     sensor_manager.list_device()
-    flag = sensor_manager.open(sn_list=[sn])
+    flag = sensor_manager.open(sn_list=sn_list)
     if not flag:
         sys.exit()
 
@@ -91,23 +94,31 @@ if __name__ == "__main__":
             cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
             cv2.imshow(win_name, frame.image)
         key = chr(cv2.waitKey(0) & 0xff)
-        if key == 'e':
+        if key == 'e':  # embed
             embed()
-        if key == 'q':
+        if key == 'q':  # quite
             break
-        if key == 's':
-            config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = True
-            if args.save_as_file_camera and hasattr(sensor, "save_as_file_camera"):
-                sensor.save_as_file_camera(
-                    config_sensor_path, args.file_camera_dir)
-                print(
-                    f"create file camera, raw data save in {args.file_camera_dir}/{sn}")
-            if args.save_config and hasattr(sensor, "save_config"):
-                sensor.save_config(args.config_sensor_path)
-            else:
+        if key == 's':  # save config
+            for sn in sn_list:
+                config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = True
                 sensor = sensor_manager.sensor_dict[sn]
-                with open(config_sensor_path, 'w') as f:
-                    json.dump(config_sensor, f)
-
-            print(f"save config file to {config_sensor_path}")
-            break
+                if hasattr(sensor, "save_config"):
+                    sensor.save_config(args.config_sensor_path)
+                    print(f"save sensor config in {args.config_sensor_path}")
+                else:
+                    print(
+                        f"sensor: {sn} has no 'save_config' function, so update to {config_sensor_path}")
+                    with open(config_sensor_path, 'w') as f:
+                        json.dump(config_sensor, f)
+                config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = False
+        if key == 'f':  # file camera
+            for sn in sn_list:
+                sensor = sensor_manager.sensor_dict[sn]
+                if hasattr(sensor, "save_as_file_camera"):
+                    sensor.save_as_file_camera(
+                        config_sensor_path, args.file_camera_dir)
+                    print(
+                        f"create file camera, raw data save in {args.file_camera_dir}/{sn}")
+                else:
+                    print(
+                        f"sensor: {sn} has no 'save_as_file_camera' function")

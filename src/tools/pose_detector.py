@@ -118,9 +118,10 @@ class PoseDetector:
         return ret, T_obj_2_cam, image_pts, detected_obj_pts
 
     def draw(self, frame: Frame, image_pts=None, pose=None, axis_ratio=1, pattern_was_found=True) -> np.ndarray:
-        image = frame.image
-        if len(image.shape) == 2:
-            image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        if len(frame.image.shape) == 2:
+            image = cv2.cvtColor(frame.image, cv2.COLOR_GRAY2BGR)
+        else:
+            image = copy.deepcopy(frame.image)
         if image_pts is not None:
             cv2.drawChessboardCorners(
                 image, (self.pattern_per_rows, self.pattern_per_cols), image_pts, pattern_was_found)

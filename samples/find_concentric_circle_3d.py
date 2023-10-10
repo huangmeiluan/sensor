@@ -84,10 +84,16 @@ if __name__ == "__main__":
     import sys
     from IPython import embed
 
-    parse = get_common_parse("find concentric circle center")
+    parse = get_common_parse(
+        "find concentric circle center. \
+        focus on image window and press: \
+        'e': embed, \
+        'q': quit, \
+        's': save config, \
+        'f': (save as) file camera")
     args = parse.parse_args()
 
-    sn = args.sn
+    sn_list = args.sn_list
     config_sensor_path = args.config_sensor_path
 
     param = ConcentricCircleDetectorParams_3d()
@@ -100,46 +106,60 @@ if __name__ == "__main__":
     sensor_manager = SensorManager(config_sensor_path)
     sensor_manager.list_device(
         list_sensor_type=args.list_sensor_type, rvc_list_device_type=args.rvc_list_device_type)
-    flag = sensor_manager.open(sn_list=[sn])
+    flag = sensor_manager.open(sn_list=sn_list)
     if not flag:
         sys.exit()
 
     v = Vis.View()
-    sensor = sensor_manager.sensor_dict[sn]
     while True:
         v.Clear()
-        flag, frame = sensor.capture()
+        flag = sensor_manager.capture(sn_list)
         if not flag:
             print("capture failed")
             sys.exit()
 
-        ret, centers_3d, centers_2d = circle_detector.detect(frame=frame)
-        print(f"centers_3d (mm): {centers_3d}")
-        print(f"centers_2d: {centers_2d}")
-
-        v.Axes(np.eye(4).flatten(), 1000, 1)
-        v.Point(centers_3d, 3, [0, 1, 0])
-        v.Point(frame.get_valid_points(), 1, [.5, .5, .5])
-
-        debug_image = cv2.cvtColor(frame.image, cv2.COLOR_GRAY2BGR)
-        for pt in centers_2d:
-            cv2.circle(debug_image, np.int0(pt), 5, (0, 0, 255), 2)
-
-        win_name = f"{sensor.param.sensor_name}_{sensor.param.sn}"
-        cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
-        cv2.imshow(win_name, debug_image)
-        key = chr(cv2.waitKey(0) & 0xff)
-        if key == 'e':
-            embed()
-        if key == 'q':
-            break
-        if key == 's':
+        for sn in sn_list:
             sensor = sensor_manager.sensor_dict[sn]
-            if args.save_as_file_camera and hasattr(sensor, "save_as_file_camera"):
-                sensor.save_as_file_camera(
-                    config_sensor_path, args.file_camera_dir)
-                print(
-                    f"create file camera, raw data save in {args.file_camera_dir}/{sn}")
-            if args.save_config and hasattr(sensor, "save_config"):
-                sensor.save_config(args.config_sensor_path)
-                print(f"save sensor config in {args.config_sensor_path}")
+            frame = sensor.status.frame
+            ret, centers_3d, centers_2d = circle_detector.detect(frame=frame)
+            print(f"centers_3d (mm): {centers_3d}")
+            print(f"centers_2d: {centers_2d}")
+
+            v.Axes(np.eye(4).flatten(), 1000, 1)
+            v.Point(centers_3d, 3, [0, 1, 0])
+            v.Point(frame.get_valid_points(), 1, [.5, .5, .5])
+
+            if len(frame.image.shape) == 2:
+                debug_image = cv2.cvtColor(frame.image, cv2.COLOR_GRAY2BGR)
+            else:
+                debug_image = copy.deepcopy(frame.image)
+            for pt in centers_2d:
+                cv2.circle(debug_image, np.int0(pt), 5, (0, 0, 255), 2)
+
+            win_name = f"{sensor.param.sensor_name}_{sensor.param.sn}"
+            cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
+            cv2.imshow(win_name, debug_image)
+        key = chr(cv2.waitKey(0) & 0xff)
+        if key == 'e':  # embed
+            embed()
+        if key == 'q':  # quite
+            break
+        if key == 's':  # save config
+            for sn in sn_list:
+                sensor = sensor_manager.sensor_dict[sn]
+                if hasattr(sensor, "save_config"):
+                    sensor.save_config(args.config_sensor_path)
+                    print(f"save sensor config in {args.config_sensor_path}")
+                else:
+                    print(f"sensor: {sn} has no 'save_config' function")
+        if key == 'f':  # file camera
+            for sn in sn_list:
+                sensor = sensor_manager.sensor_dict[sn]
+                if hasattr(sensor, "save_as_file_camera"):
+                    sensor.save_as_file_camera(
+                        config_sensor_path, args.file_camera_dir)
+                    print(
+                        f"create file camera, raw data save in {args.file_camera_dir}/{sn}")
+                else:
+                    print(
+                        f"sensor: {sn} has no 'save_as_file_camera' function")

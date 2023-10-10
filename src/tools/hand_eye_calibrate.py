@@ -2,7 +2,7 @@ from src.tools.pose_detector import PoseDetector
 import numpy as np
 import copy
 import cv2
-from sensor.frame import Frame
+from src.sensor.frame import Frame
 
 
 def detect_caliboard_pose(frame, **kwargs):

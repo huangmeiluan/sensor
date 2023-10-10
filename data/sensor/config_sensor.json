@@ -33,21 +33,58 @@
         "post_process_config": {
             "crop_by_plane": {
                 "crop_distance_range_mm": [
-                    0,
+                    10,
                     1000
                 ],
                 "enable": true,
                 "plane_center_mm": [
-                    127.56834411621094,
-                    98.46743774414062,
-                    48.606014251708984
+                    121.69945526123047,
+                    75.36859130859375,
+                    35.05228805541992
                 ],
                 "plane_normal": [
-                    -0.013547764934867383,
-                    0.21929484394273843,
-                    0.9755645696136157
+                    -0.006773656477628518,
+                    0.017440263604736973,
+                    0.9998249620725221
                 ]
+            },
+            "dbscan_removal": {
+                "distance_threshold_mm": 3,
+                "min_points": 3,
+                "min_num_cluster": 10000
+            },
+            "estimate_normal": {
+                "search_radius_pixel": 10,
+                "distance_threshold_mm": 500
             }
+        },
+        "capture_options": {
+            "capture_mode": "CaptureMode_Normal",
+            "confidence_threshold": 0.0,
+            "exposure_time_2d": 7,
+            "exposure_time_3d": 7,
+            "gain_2d": 0.0,
+            "gain_3d": 0.0,
+            "gamma_2d": 1.0,
+            "gamma_3d": 1.0,
+            "hdr_exposure_times": 0,
+            "light_contrast_threshold": 3,
+            "phase_filter_range": 0,
+            "projector_brightness": 240,
+            "scan_times": 2,
+            "use_projector_capturing_2d_image": true,
+            "hdr_exposuretime_content_1": 11,
+            "hdr_exposuretime_content_2": 20,
+            "hdr_exposuretime_content_3": 50,
+            "hdr_gain_3d_1": 0,
+            "hdr_gain_3d_2": 0,
+            "hdr_gain_3d_3": 0,
+            "hdr_projector_brightness_1": 240,
+            "hdr_projector_brightness_2": 240,
+            "hdr_projector_brightness_3": 240,
+            "hdr_scan_times_1": 2,
+            "hdr_scan_times_2": 2,
+            "hdr_scan_times_3": 2
         }
     },
     "file_P2GM453B001": {
@@ -57,20 +94,25 @@
         "post_process_config": {
             "crop_by_plane": {
                 "crop_distance_range_mm": [
-                    0,
+                    10,
                     1000
                 ],
                 "enable": true,
                 "plane_center_mm": [
-                    126.90702819824219,
-                    99.62474060058594,
-                    48.444950103759766
+                    121.69945526123047,
+                    75.36859130859375,
+                    35.05228805541992
                 ],
                 "plane_normal": [
-                    -0.0026457356730531685,
-                    0.21826939449287477,
-                    0.9758849683802195
+                    -0.006773656477628518,
+                    0.017440263604736973,
+                    0.9998249620725221
                 ]
+            },
+            "dbscan_removal": {
+                "distance_threshold_mm": 1,
+                "min_points": 5,
+                "min_num_cluster": 100000
             }
         },
         "frame_pose": [
@@ -149,7 +191,34 @@
                 1.0
             ]
         ],
-        "data_dir": "./data/tmp/P2GM453B001/",
+        "data_dir": "/home/rvbust/Rvbust/Data/sensor/P2GM453B001/",
         "unit": "mm"
+    },
+    "G1GM150B010": {
+        "post_process_config": {
+            "crop_by_plane": {
+                "crop_distance_range_mm": [
+                    10,
+                    1500
+                ],
+                "enable": true,
+                "plane_center_mm": [
+                    72.10713958740234,
+                    -84.27320098876953,
+                    1379.1700439453125
+                ],
+                "plane_normal": [
+                    0.20535990661682174,
+                    0.021901304592100254,
+                    -0.9784414349420687
+                ]
+            },
+            "dbscan_removal": {
+                "distance_threshold_mm": 3,
+                "min_points": 3,
+                "min_num_cluster": 100
+            }
+        },
+        "sensor_name": "RVC"
     }
 }
