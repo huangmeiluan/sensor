@@ -188,6 +188,45 @@ class HandEyeCalibrateManager:
         hand_eye_result[:3, 3] = t_cam2gripper.flatten()
         return True, hand_eye_result
 
+    def calibrate_rotary(self):
+        T_target_2_cam = np.array(
+            [position_infos.calib_pose for position_infos in self.position_infos_list])
+        points = T_target_2_cam[:, :3, 3]
+        ret, circle_center, circle_normal, radius = cv2.fit_circle_3d(points)
+        print(
+            f"circle_center: {circle_center}, circle_normal: {circle_normal}, {radius}")
+
+        ret, T_cam_2_rotary = self.calibrate(False)
+        print(f"T_cam_2_rotary: {T_cam_2_rotary}")
+
+        calib_z_axis_list = []
+        for position_infos in self.position_infos_list:
+            pose_rotary = position_infos.T_end_2_base
+            pose = np.linalg.inv(pose_rotary)
+
+            T_calib_2_rotary = pose @ T_cam_2_rotary @ position_infos.calib_pose
+            calib_z_axis_list.append(T_calib_2_rotary[:3, 2])
+
+        calib_z_axis = np.mean(np.array(calib_z_axis_list), axis=0)
+        axis_z = np.array([0, 0, 1])
+        axis_y = np.cross(axis_z, calib_z_axis)
+        axis_y /= np.linalg.norm(axis_y)
+        axis_x = np.cross(axis_y, axis_z)
+
+        T_new_2_rotary = np.eye(4)
+        T_new_2_rotary[:3, 0] = axis_x
+        T_new_2_rotary[:3, 1] = axis_y
+        T_new_2_rotary[:3, 2] = axis_z
+        center_in_rotary = np.dot(
+            T_cam_2_rotary[:3, :3], circle_center) + T_cam_2_rotary[:3, 3]
+        T_new_2_rotary[2, 3] = center_in_rotary[2]
+
+        T_cam_2_rotary = np.linalg.inv(T_new_2_rotary) @ T_cam_2_rotary
+
+        print(f"adjust T_cam_2_rotary: {T_cam_2_rotary}")
+
+        return ret, T_cam_2_rotary
+
 
 if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager

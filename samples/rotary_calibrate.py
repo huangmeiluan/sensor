@@ -20,8 +20,10 @@ if __name__ == "__main__":
         'f': (save as) file camera")
     parse.add_argument("circle_center_distance_mm",
                        help="the distance of circle center", type=float)
-    parse.add_argument("--rotate_angle_deg", help="rotate angle per step in degrees, default = %(default)s", default=5, type=float)
-    parse.add_argument("--rotate_speed_deg_per_second", help="rotate speed degrees per second, default = %(default)s", default=5, type=float)
+    parse.add_argument("--rotate_angle_deg",
+                       help="rotate angle per step in degrees, default = %(default)s", default=5, type=float)
+    parse.add_argument("--rotate_speed_deg_per_second",
+                       help="rotate speed degrees per second, default = %(default)s", default=5, type=float)
     args = parse.parse_args()
 
     sn_list = args.sn_list
@@ -84,9 +86,9 @@ if __name__ == "__main__":
             print(
                 f"total data: {len(hand_eye_calibrate_manager.position_infos_list)}")
         if key == 'c':  # compute
-            ret, hand_eye_result = hand_eye_calibrate_manager.calibrate(eye_in_hand=False)
+            ret, T_cam_2_rotary = hand_eye_calibrate_manager.calibrate_rotary()
             if ret:
-                frame.pose = hand_eye_result
+                frame.pose = T_cam_2_rotary
             else:
                 print(f"calibrate failed, embed here")
                 embed()
