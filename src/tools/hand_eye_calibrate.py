@@ -168,14 +168,14 @@ class HandEyeCalibrateManager:
             frame, pose_in_cam=True)
         if ret:
             position_infos = PositionInfos_3d(
-                calib_pose=pose, pose_robot_end=pose_robot_end, frame=copy.deepcopy(frame))
+                calib_pose=pose, T_end_2_base=pose_robot_end, frame=copy.deepcopy(frame))
             self.position_infos_list.append(position_infos)
 
         return ret, position_infos
 
     def calibrate(self, eye_in_hand: bool):
         T_gripper_2_base = np.array(
-            [position_infos.pose_robot_end for position_infos in self.position_infos_list])
+            [position_infos.T_end_2_base for position_infos in self.position_infos_list])
         if not eye_in_hand:
             for i in range(T_gripper_2_base.shape[0]):
                 T_gripper_2_base[i] = np.linalg.inv(T_gripper_2_base[i])
@@ -185,7 +185,7 @@ class HandEyeCalibrateManager:
             T_gripper_2_base[:, :3, :3], T_gripper_2_base[:, :3, 3], T_target_2_cam[:, :3, :3], T_target_2_cam[:, :3, 3])
         hand_eye_result = np.eye(4)
         hand_eye_result[:3, :3] = R_cam2gripper
-        hand_eye_result[:3, 3] = t_cam2gripper
+        hand_eye_result[:3, 3] = t_cam2gripper.flatten()
         return True, hand_eye_result
 
 

@@ -6,21 +6,21 @@
         "select_camera": "CameraID_0",
         "frame_pose": [
             [
-                1.0,
-                0.0,
-                0.0,
-                0.0
+                0.9939401036416455,
+                -0.08480664885228431,
+                -0.06993498897747942,
+                64.74933451203273
             ],
             [
-                0.0,
-                1.0,
-                0.0,
-                0.0
+                -0.10055067550249217,
+                -0.44438835222883033,
+                -0.890173328099274,
+                560.0479759942531
             ],
             [
-                0.0,
-                0.0,
-                1.0,
+                0.044414322338940916,
+                0.8918109803729658,
+                -0.4502227707006634,
                 0.0
             ],
             [
@@ -38,31 +38,27 @@
                 ],
                 "enable": true,
                 "plane_center_mm": [
-                    121.69945526123047,
-                    75.36859130859375,
-                    35.05228805541992
+                    89.82540893554688,
+                    108.53805541992189,
+                    -94.69277191162121
                 ],
                 "plane_normal": [
-                    -0.006773656477628518,
-                    0.017440263604736973,
-                    0.9998249620725221
+                    0.29179602861404413,
+                    -0.2660718262195587,
+                    0.9187278747558594
                 ]
             },
             "dbscan_removal": {
                 "distance_threshold_mm": 3,
                 "min_points": 3,
                 "min_num_cluster": 10000
-            },
-            "estimate_normal": {
-                "search_radius_pixel": 10,
-                "distance_threshold_mm": 500
             }
         },
         "capture_options": {
             "capture_mode": "CaptureMode_Normal",
             "confidence_threshold": 0.0,
-            "exposure_time_2d": 7,
-            "exposure_time_3d": 7,
+            "exposure_time_2d": 11,
+            "exposure_time_3d": 11,
             "gain_2d": 0.0,
             "gain_3d": 0.0,
             "gamma_2d": 1.0,
@@ -220,5 +216,162 @@
             }
         },
         "sensor_name": "RVC"
+    },
+    "P2GM453B002": {
+        "type": "RVC",
+        "sn": "P2GM453B002",
+        "sensor_name": "RVC-DP5460",
+        "select_camera": "CameraID_0",
+        "frame_pose": [
+            [
+                0.9964860457382365,
+                -0.07307149749055472,
+                0.040940406732969364,
+                -7.371925580335642
+            ],
+            [
+                0.010471914756246321,
+                -0.37626494313186365,
+                -0.9264529300354731,
+                618.9362015411815
+            ],
+            [
+                0.08310174276338024,
+                0.9236261412630455,
+                -0.37417756683856074,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ]
+        ],
+        "post_process_config": {
+            "dbscan_removal": {
+                "distance_threshold_mm": 3,
+                "min_points": 3,
+                "min_num_cluster": 10000
+            }
+        },
+        "capture_options": {
+            "capture_mode": "CaptureMode_Normal",
+            "confidence_threshold": 0.0,
+            "exposure_time_2d": 25,
+            "exposure_time_3d": 25,
+            "gain_2d": 0.0,
+            "gain_3d": 0.0,
+            "gamma_2d": 1.0,
+            "gamma_3d": 1.0,
+            "hdr_exposure_times": 0,
+            "light_contrast_threshold": 3,
+            "phase_filter_range": 0,
+            "projector_brightness": 240,
+            "scan_times": 2,
+            "use_projector_capturing_2d_image": true,
+            "hdr_exposuretime_content_1": 11,
+            "hdr_exposuretime_content_2": 20,
+            "hdr_exposuretime_content_3": 50,
+            "hdr_gain_3d_1": 0,
+            "hdr_gain_3d_2": 0,
+            "hdr_gain_3d_3": 0,
+            "hdr_projector_brightness_1": 240,
+            "hdr_projector_brightness_2": 240,
+            "hdr_projector_brightness_3": 240,
+            "hdr_scan_times_1": 2,
+            "hdr_scan_times_2": 2,
+            "hdr_scan_times_3": 2
+        }
+    },
+    "file_P2GM453B002": {
+        "type": "File",
+        "sensor_name": "RVC-DP5460",
+        "sn": "file_P2GM453B002",
+        "post_process_config": {
+            "dbscan_removal": {
+                "distance_threshold_mm": 3,
+                "min_points": 3,
+                "min_num_cluster": 10000
+            }
+        },
+        "frame_pose": [
+            [
+                0.9964860457382365,
+                -0.07307149749055472,
+                0.040940406732969364,
+                -7.371925580335642
+            ],
+            [
+                0.010471914756246321,
+                -0.37626494313186365,
+                -0.9264529300354731,
+                618.9362015411815
+            ],
+            [
+                0.08310174276338024,
+                0.9236261412630455,
+                -0.37417756683856074,
+                0.0
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ]
+        ],
+        "intrinsic_matrix": [
+            [
+                3567.45556640625,
+                0.0,
+                1233.518310546875
+            ],
+            [
+                0.0,
+                3567.353759765625,
+                1038.4354248046875
+            ],
+            [
+                0.0,
+                0.0,
+                1.0
+            ]
+        ],
+        "distortion": [
+            -0.05889547988772392,
+            0.07798279076814651,
+            0.1209014430642128,
+            7.74823929532431e-05,
+            0.0001726984919514507
+        ],
+        "extrinsic_matrix": [
+            [
+                -0.9845413565635681,
+                -0.007884734310209751,
+                0.17497457563877106,
+                104.48698699474335
+            ],
+            [
+                -0.005745479371398687,
+                0.9999024868011475,
+                0.01272929459810257,
+                -77.06476747989655
+            ],
+            [
+                -0.17505787312984467,
+                0.011527204886078835,
+                -0.9844906330108643,
+                657.0394039154053
+            ],
+            [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ]
+        ],
+        "data_dir": "/home/rvbust/Rvbust/Data/sensor/P2GM453B002/",
+        "unit": "mm"
     }
 }

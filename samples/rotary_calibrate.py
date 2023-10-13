@@ -20,6 +20,8 @@ if __name__ == "__main__":
         'f': (save as) file camera")
     parse.add_argument("circle_center_distance_mm",
                        help="the distance of circle center", type=float)
+    parse.add_argument("--rotate_angle_deg", help="rotate angle per step in degrees, default = %(default)s", default=5, type=float)
+    parse.add_argument("--rotate_speed_deg_per_second", help="rotate speed degrees per second, default = %(default)s", default=5, type=float)
     args = parse.parse_args()
 
     sn_list = args.sn_list
@@ -45,6 +47,8 @@ if __name__ == "__main__":
     # rotary manager
     rotary = RPController(ip_addr="10.10.10.10")
     rotary.connect()
+    rotary.set_step_speed(args.rotate_speed_deg_per_second)
+    embed()
 
     v = Vis.View()
     while True:
@@ -64,6 +68,7 @@ if __name__ == "__main__":
         debug_image = hand_eye_calibrate_manager.draw_points(
             frame=frame, pose=T_calib_2_cam, pattern_was_found=ret, image_pts=points_2d)
 
+        v.Point(frame.get_valid_points(), 1, [.5, .5, .5])
         win_name = f"{sensor.param.sensor_name}_{sensor.param.sn}"
         cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
         cv2.imshow(win_name, debug_image)
@@ -79,8 +84,7 @@ if __name__ == "__main__":
             print(
                 f"total data: {len(hand_eye_calibrate_manager.position_infos_list)}")
         if key == 'c':  # compute
-            ret, hand_eye_result = hand_eye_calibrate_manager.calibrate(
-                eye_in_hand=False, calib_sensor=True)
+            ret, hand_eye_result = hand_eye_calibrate_manager.calibrate(eye_in_hand=False)
             if ret:
                 frame.pose = hand_eye_result
             else:
@@ -109,3 +113,4 @@ if __name__ == "__main__":
                 else:
                     print(
                         f"sensor: {sn} has no 'save_as_file_camera' function")
+        rotary.step_move(angle_in_deg=args.rotate_angle_deg)

@@ -58,7 +58,6 @@ class RPController:
         self.__axis = np.asarray(axis)
 
         self.sock = None
-        self.cur_angle_deg = 0
         self.m_is_connected = False
         self.m_is_working = False
 
@@ -207,7 +206,7 @@ class RPController:
             print("rot set_step_speed fail: {}".format(ee))
         return data
 
-    def read_rp_angle(self):
+    def read_rp_angle(self, force_range=True):
         """Read current table position
 
         Returns:
@@ -218,7 +217,13 @@ class RPController:
         self.sock.send(self.READ_MOTOR_PULSES)
         res = self.sock.recv(13)
         pulses_pos = struct.unpack(">i", res[-2:] + res[-4:-2])[0]
-        return pulses_pos / self.PULSES_X_LOOP * 360
+
+        angle_deg = pulses_pos / self.PULSES_X_LOOP * 360
+        if force_range:
+            angle_deg = angle_deg % 360
+            tmp = angle_deg % 360
+            angle_deg = tmp if abs(tmp) < abs(tmp - 360) else tmp - 360
+        return angle_deg
 
     def is_moving(self):
         if not self.m_is_connected:
@@ -264,22 +269,8 @@ class RPController:
                 break
         pos2 = self.read_rp_angle()
 
-        self.cur_angle_deg += angle_in_deg
-        tmp = self.cur_angle_deg % 360
-        self.cur_angle_deg = tmp if abs(tmp) < abs(tmp - 360) else tmp - 360
-
         self.m_is_working = False
         return abs((pos2 - pos1) - angle_in_deg) < 1e-5
-
-    def get_encoder_angle(self):
-        return self.cur_angle_deg
-
-    def set_encoder_angle(self, degree):
-        self.cur_angle_deg = 0
-
-    def go_home(self):
-        self.step_move(-1 * self.get_encoder_angle())
-
 
 if __name__ == "__main__":
     from IPython import embed
