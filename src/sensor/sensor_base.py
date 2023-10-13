@@ -115,9 +115,9 @@ class SensorBase:
             if key == "estimate_normal":
                 param = post_process_config[key]
                 if param.get("enable", True):
-                    frame.normals, curvature = cv2.estimatePointMapNormal(
-                        frame.pm, frame.mask, param["distance_threshold_mm"], param["search_radius_pixel"])
-                    frame.normals[frame.normals[:, :, 2] < 0] *= -1
+                    T_cam_2_pcd = np.linalg.inv(frame.extrinsic_matrix)
+                    frame.normals = cv2.estimatePointMapNormal(
+                        frame.pm, frame.mask, param["search_radius_pixel"], T_cam_2_pcd[:3, 3])
             t1 = time.time()
             print(f"{key} times(s): {t1 - t0}")
         frame.mask[src_mask == 0] = 0

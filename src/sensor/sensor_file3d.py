@@ -122,7 +122,8 @@ class Sensor3D_File(SensorBase):
         return True
 
     def open(self, **kwargs) -> bool:
-        self._update_frame_info(kwargs.get(self.param.sn, {}))
+        self._update_frame_info(kwargs.get(
+            "sensor_config", {}).get(self.param.sn, {}))
 
         self._file_names = self._get_file_names()
         return True
