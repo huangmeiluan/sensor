@@ -3,6 +3,7 @@ import numpy as np
 import copy
 import cv2
 from src.sensor.frame import Frame
+from scipy.spatial.transform import Rotation
 
 
 def detect_caliboard_pose(frame, **kwargs):
@@ -142,7 +143,7 @@ class PositionInfos_3d:
 class HandEyeCalibrateManager:
     def __init__(self) -> None:
         self.pose_detector = PoseDetector()
-        self.position_infos_list = []  # list of PositionInfos_2d
+        self.position_infos_list = []  # list of PositionInfos_3d
 
     def set_circle_center_distance(self, circle_center_distance_mm):
         self.pose_detector.circle_center_distance_mm = circle_center_distance_mm
@@ -188,27 +189,51 @@ class HandEyeCalibrateManager:
         hand_eye_result[:3, 3] = t_cam2gripper.flatten()
         return True, hand_eye_result
 
+    def compute_consistent_calib_pose(self, hand_eye_result, eye_in_hand: bool):
+        '''For eye in hand, the calibord pose is from caliboard to robot base.
+        For eye to hand, is from caliboard to robot end
+
+        Args:
+            hand_eye_result (_type_): _description_
+        '''
+        zs = []
+        xyzRxRyRz_list = []
+        for position_infos in self.position_infos_list:
+            robot_pose = position_infos.T_end_2_base
+            if not eye_in_hand:
+                robot_pose = np.linalg.inv(robot_pose)
+
+            calib_pose = robot_pose @ hand_eye_result @ position_infos.calib_pose
+            R = Rotation.from_matrix(calib_pose[:3, :3])
+            xyzRxRyRz_list.append(
+                np.append(calib_pose[:3, 3], R.as_euler("xyz", degrees=True)))
+            zs.append(calib_pose[:3, 2])
+        xyzRxRyRz_list = np.array(xyzRxRyRz_list)
+        mean = np.mean(xyzRxRyRz_list, axis=0)
+
+        consistent_calib_pose = np.eye(4)
+        consistent_calib_pose[:3, 3] = mean[:3]
+        R = Rotation.from_euler("xyz", mean[3:], degrees=True)
+        consistent_calib_pose[:3, :3] = R.as_matrix()
+
+        return consistent_calib_pose
+
     def calibrate_rotary(self):
         T_target_2_cam = np.array(
             [position_infos.calib_pose for position_infos in self.position_infos_list])
-        points = T_target_2_cam[:, :3, 3]
+        points = T_target_2_cam[:, :3, 3].astype(np.float32)
         ret, circle_center, circle_normal, radius = cv2.fit_circle_3d(points)
         print(
             f"circle_center: {circle_center}, circle_normal: {circle_normal}, {radius}")
 
-        ret, T_cam_2_rotary = self.calibrate(False)
-        print(f"T_cam_2_rotary: {T_cam_2_rotary}")
+        eye_in_hand = False  # FIXME: update by rotary's get_pose
+        ret, T_cam_2_rotary = self.calibrate(eye_in_hand=eye_in_hand)
 
-        calib_z_axis_list = []
-        for position_infos in self.position_infos_list:
-            pose_rotary = position_infos.T_end_2_base
-            pose = np.linalg.inv(pose_rotary)
+        T_calib_2_rotary = self.compute_consistent_calib_pose(
+            T_cam_2_rotary, eye_in_hand=eye_in_hand)
 
-            T_calib_2_rotary = pose @ T_cam_2_rotary @ position_infos.calib_pose
-            calib_z_axis_list.append(T_calib_2_rotary[:3, 2])
-
-        calib_z_axis = np.mean(np.array(calib_z_axis_list), axis=0)
-        axis_z = np.array([0, 0, 1])
+        calib_z_axis = T_calib_2_rotary[:3, 2]
+        axis_z = np.dot(T_cam_2_rotary[:3, :3], circle_normal)
         axis_y = np.cross(axis_z, calib_z_axis)
         axis_y /= np.linalg.norm(axis_y)
         axis_x = np.cross(axis_y, axis_z)
@@ -219,14 +244,67 @@ class HandEyeCalibrateManager:
         T_new_2_rotary[:3, 2] = axis_z
         center_in_rotary = np.dot(
             T_cam_2_rotary[:3, :3], circle_center) + T_cam_2_rotary[:3, 3]
-        T_new_2_rotary[2, 3] = center_in_rotary[2]
+        T_new_2_rotary[:3, 3] = center_in_rotary
 
         T_cam_2_rotary = np.linalg.inv(T_new_2_rotary) @ T_cam_2_rotary
 
-        print(f"adjust T_cam_2_rotary: {T_cam_2_rotary}")
-
         return ret, T_cam_2_rotary
+
+    def compute_errors(self, hand_eye_result, eye_in_hand: bool, consistent_calib_pose=None):
+        '''Error is computed in consistent caliboard coordidate.
+        For eye in hand, consistent_calib_pose is from caliboard to robot base
+        For eye to hand, consistent_calib_pose is from caliboard to robot end
+
+        Args:
+            hand_eye_result (_type_): _description_
+            eye_in_hand (bool): _description_
+            consistent_calib_pose (_type_, optional): _description_. Defaults to None.
+
+        Returns:
+            _type_: _description_
+        '''
+        if consistent_calib_pose is None:
+            consistent_calib_pose = self.compute_consistent_calib_pose(
+                hand_eye_result=hand_eye_result, eye_in_hand=eye_in_hand)
+
+        T_base_2_calib = np.linalg.inv(consistent_calib_pose)
+        error_xyzrxryrz = []
+        for position_infos in self.position_infos_list:
+            robot_pose = position_infos.T_end_2_base
+            if not eye_in_hand:
+                robot_pose = np.linalg.inv(robot_pose)
+
+            calib_pose = robot_pose @ hand_eye_result @ position_infos.calib_pose
+            delta_pose = T_base_2_calib @ calib_pose
+            R = Rotation.from_matrix(delta_pose[:3, :3])
+            error_xyzrxryrz.append(
+                np.append(delta_pose[:3, 3], R.as_euler("xyz", degrees=True)))
+        error_xyzrxryrz = np.array(error_xyzrxryrz)
+
+        return error_xyzrxryrz
 
 
 if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager
+    from IPython import embed
+
+    T_target_2_cam = np.loadtxt("T_target_2_cam_01.txt").reshape((-1, 4, 4))
+    T_gripper_2_base = np.loadtxt(
+        "T_gripper_2_base_01.txt").reshape((-1, 4, 4))
+
+    hand_eye_calibrate_manager = HandEyeCalibrateManager()
+    hand_eye_calibrate_manager.set_circle_center_distance(
+        circle_center_distance_mm=28)
+
+    position_infos_list = hand_eye_calibrate_manager.position_infos_list
+    for pose0, pose1 in zip(T_target_2_cam, T_gripper_2_base):
+        position_infos_list.append(PositionInfos_3d(
+            calib_pose=pose0, T_end_2_base=pose1))
+
+    ret, T_cam_2_rotary = hand_eye_calibrate_manager.calibrate_rotary()
+
+    errors_xyzrxryrz = hand_eye_calibrate_manager.compute_errors(
+        T_cam_2_rotary, False)
+    print(
+        f"max error_xyzrxryrz: {np.max(errors_xyzrxryrz, axis=0) - np.min(errors_xyzrxryrz, axis=0)}")
+    embed()
