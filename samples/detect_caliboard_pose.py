@@ -42,7 +42,8 @@ if __name__ == "__main__":
     sn_list = args.sn_list
 
     sensor_manager = SensorManager(config_sensor_path)
-    sensor_manager.list_device()
+    sensor_manager.list_device(
+        list_sensor_type=args.list_sensor_type, rvc_list_device_type=args.rvc_list_device_type)
     flag = sensor_manager.open(sn_list=sn_list)
     if not flag:
         sys.exit()

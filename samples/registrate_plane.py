@@ -6,17 +6,6 @@ import os
 from src.tools.common import get_common_parse
 
 
-def segment_plane(pcd, distance_threshold_mm, num_iteration=30):
-    if pcd.shape[0] < 100:
-        return np.array([0, 0, 0]), np.array([0, 0, 1])
-    pcd_o3d = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(pcd))
-    plane, inlier_idx = pcd_o3d.segment_plane(
-        distance_threshold_mm, 3, num_iterations=num_iteration)
-    inlier_points = pcd[inlier_idx]
-    center = np.mean(inlier_points, axis=0)
-    return np.array(center), np.array(plane[:3])
-
-
 if __name__ == "__main__":
     import json
     from RVBUST import Vis
@@ -25,14 +14,16 @@ if __name__ == "__main__":
     from IPython import embed
     from src.sensor.sensor_manager import SensorManager
 
-    parse = get_common_parse(
+    parser = get_common_parse(
         "registrate sensor plane, use for crop_by_plane function \
         focus on image window and press: \
         'e': embed, \
         'q': quit, \
         's': save config, \
         'f': (save as) file camera")
-    args = parse.parse_args()
+    parser.add_argument("--distance_threshold",
+                        help="default = %(default)s", type=float, default=3)
+    args = parser.parse_args()
 
     config_sensor_path = args.config_sensor_path
 
@@ -49,10 +40,11 @@ if __name__ == "__main__":
         if "crop_by_plane" not in config_sensor[sn]["post_process_config"]:
             config_sensor[sn]["post_process_config"]["crop_by_plane"] = {}
             config_sensor[sn]["post_process_config"]["crop_by_plane"]["crop_distance_range_mm"] = [
-                0, 1000]
+                5, 1000]
         config_sensor[sn]["post_process_config"]["crop_by_plane"]["enable"] = False
 
-    sensor_manager.list_device()
+    sensor_manager.list_device(
+        list_sensor_type=args.list_sensor_type, rvc_list_device_type=args.rvc_list_device_type)
     flag = sensor_manager.open(sn_list=sn_list)
     if not flag:
         sys.exit()
@@ -73,9 +65,11 @@ if __name__ == "__main__":
             frame = sensor.status.frame
 
             valid_pcd = frame.get_valid_points()
-            handle_src = v.Point(valid_pcd.flatten(), 1, [0.5, 0.5, 0.5])
 
-            plane_center, plane_normal = segment_plane(valid_pcd, 10)
+            plane_center, plane_normal, inlier_indices = cv2.fit_plane_ransac(
+                valid_pcd, distance_threshold=args.distance_threshold)
+            plane_center = np.array(plane_center)
+            plane_normal = np.array(plane_normal)
             if np.dot(plane_normals_direction, plane_normal) < 0:
                 plane_normal *= -1
 
@@ -84,12 +78,14 @@ if __name__ == "__main__":
             crop_by_plane["plane_normal"] = plane_normal.tolist()
 
             handle_plane = draw_plane(
-                v, plane_normal, plane_center, xLength=3000, yLength=3000)
+                v, plane_normal, plane_center, xLength=500, yLength=500)
             handle_plane_lower = draw_plane(
                 v, plane_normal, plane_center + plane_normal * crop_by_plane["crop_distance_range_mm"][0], xLength=2000, yLength=2000, color=(0, 0, 1))
             handle_plane_upper = draw_plane(
                 v, plane_normal, plane_center + plane_normal * crop_by_plane["crop_distance_range_mm"][1], xLength=2000, yLength=2000, color=(0, 0, 1))
 
+            v.Point(valid_pcd.flatten(), 1, [0.5, 0.5, 0.5])
+            v.Point(valid_pcd[inlier_indices], 2, [1, 0, 0])
             win_name = f"{sensor.param.sensor_name}_{sensor.param.sn}"
             cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
             cv2.imshow(win_name, frame.image)
