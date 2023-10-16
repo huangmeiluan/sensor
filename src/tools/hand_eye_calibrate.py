@@ -4,6 +4,7 @@ import copy
 import cv2
 from src.sensor.frame import Frame
 from scipy.spatial.transform import Rotation
+import os
 
 
 def detect_caliboard_pose(frame, **kwargs):
@@ -177,11 +178,17 @@ class HandEyeCalibrateManager:
     def calibrate(self, eye_in_hand: bool):
         T_gripper_2_base = np.array(
             [position_infos.T_end_2_base for position_infos in self.position_infos_list])
+        save_dir = "./data/tmp/calibrate"
+        os.makedirs(save_dir, exist_ok=True)
+        np.savetxt(f"{save_dir}/T_gripper_2_base.txt",
+                   T_gripper_2_base.reshape((-1, 16)))
         if not eye_in_hand:
             for i in range(T_gripper_2_base.shape[0]):
                 T_gripper_2_base[i] = np.linalg.inv(T_gripper_2_base[i])
         T_target_2_cam = np.array(
             [position_infos.calib_pose for position_infos in self.position_infos_list])
+        np.savetxt(f"{save_dir}/T_target_2_cam.txt",
+                   T_target_2_cam.reshape((-1, 16)))
         R_cam2gripper, t_cam2gripper = cv2.calibrateHandEye(
             T_gripper_2_base[:, :3, :3], T_gripper_2_base[:, :3, 3], T_target_2_cam[:, :3, :3], T_target_2_cam[:, :3, 3])
         hand_eye_result = np.eye(4)
@@ -288,9 +295,10 @@ if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager
     from IPython import embed
 
-    T_target_2_cam = np.loadtxt("T_target_2_cam_01.txt").reshape((-1, 4, 4))
+    T_target_2_cam = np.loadtxt(
+        "./data/tmp/calibrate/T_target_2_cam_02.txt").reshape((-1, 4, 4))
     T_gripper_2_base = np.loadtxt(
-        "T_gripper_2_base_01.txt").reshape((-1, 4, 4))
+        "./data/tmp/calibrate/T_gripper_2_base_02.txt").reshape((-1, 4, 4))
 
     hand_eye_calibrate_manager = HandEyeCalibrateManager()
     hand_eye_calibrate_manager.set_circle_center_distance(
@@ -305,6 +313,7 @@ if __name__ == "__main__":
 
     errors_xyzrxryrz = hand_eye_calibrate_manager.compute_errors(
         T_cam_2_rotary, False)
+    print(f"T_cam_2_rotary: {T_cam_2_rotary}")
     print(
         f"max error_xyzrxryrz: {np.max(errors_xyzrxryrz, axis=0) - np.min(errors_xyzrxryrz, axis=0)}")
     embed()
