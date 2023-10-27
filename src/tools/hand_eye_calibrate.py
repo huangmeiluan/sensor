@@ -294,26 +294,48 @@ class HandEyeCalibrateManager:
 if __name__ == "__main__":
     from src.sensor.sensor_manager import SensorManager
     from IPython import embed
+    from RVBUST import Vis
 
-    T_target_2_cam = np.loadtxt(
-        "./data/tmp/calibrate/T_target_2_cam_02.txt").reshape((-1, 4, 4))
-    T_gripper_2_base = np.loadtxt(
-        "./data/tmp/calibrate/T_gripper_2_base_02.txt").reshape((-1, 4, 4))
+    data_dir = "./data/handEye_1027"
+    T_robot_end_poses = np.loadtxt(f"{data_dir}/rob_pos.txt")
+
+    eye_in_hand = True
 
     hand_eye_calibrate_manager = HandEyeCalibrateManager()
     hand_eye_calibrate_manager.set_circle_center_distance(
-        circle_center_distance_mm=28)
+        circle_center_distance_mm=40)
 
     position_infos_list = hand_eye_calibrate_manager.position_infos_list
-    for pose0, pose1 in zip(T_target_2_cam, T_gripper_2_base):
-        position_infos_list.append(PositionInfos_3d(
-            calib_pose=pose0, T_end_2_base=pose1))
+    v = Vis.View()
+    v.Axes(np.eye(4), 1000, 1)
+    for i in range(2, len(T_robot_end_poses)):
+        robot_end_pose_xyzRxRyRz = T_robot_end_poses[i]
+        robot_end_pose = np.eye(4)
+        R = Rotation.from_euler(
+            "xyz", robot_end_pose_xyzRxRyRz[3:], degrees=True)
+        robot_end_pose[:3, :3] = R.as_matrix()
+        robot_end_pose[:3, 3] = robot_end_pose_xyzRxRyRz[:3]
+        calib_pose = np.loadtxt(f"{data_dir}/{i}.txt")
 
-    ret, T_cam_2_rotary = hand_eye_calibrate_manager.calibrate_rotary()
+        v.Axes(robot_end_pose, 500, 3)
+        # v.Axes(calib_pose, 500, 5)
+
+        position_infos_list.append(PositionInfos_3d(
+            calib_pose=calib_pose, T_end_2_base=robot_end_pose))
+        # embed()
+
+    ret, T_cam_2_end = hand_eye_calibrate_manager.calibrate(
+        eye_in_hand=eye_in_hand)
 
     errors_xyzrxryrz = hand_eye_calibrate_manager.compute_errors(
-        T_cam_2_rotary, False)
-    print(f"T_cam_2_rotary: {T_cam_2_rotary}")
+        T_cam_2_end, eye_in_hand=eye_in_hand)
+    print(f"errors_xyzrxryrz: {errors_xyzrxryrz}")
+    print(f"T_cam_2_end: {T_cam_2_end}")
     print(
         f"max error_xyzrxryrz: {np.max(errors_xyzrxryrz, axis=0) - np.min(errors_xyzrxryrz, axis=0)}")
+    np.savetxt(f"{data_dir}/T_cam_2_end.txt", T_cam_2_end)
+
+    for infos in position_infos_list:
+        T_calib_2_robot_base = infos.T_end_2_base @ T_cam_2_end @ infos.calib_pose
+        v.Axes(T_calib_2_robot_base, 200, 5)
     embed()
