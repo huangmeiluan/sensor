@@ -4,7 +4,7 @@ from src.sensor.frame import Frame
 from typing import Tuple
 import cv2
 import copy
-from src.tools.geometry import intersect_l2p
+from src.tools.geometry import intersect_l2p, fit_plane
 
 
 class ConcentricCircleDetectorParams_3d(ConcentricCircleDetectorParams):
@@ -51,8 +51,10 @@ class ConcentricCircleDetector_3d(ConcentricCircleDetector):
                 ret = False
                 break
 
-            plane_center, plane_normal, rms_error = cv2.fitPlane(copy.deepcopy(
-                pm_roi.astype(np.float32)), copy.deepcopy(mask_roi.astype(np.uint8)))
+            # plane_center, plane_normal, rms_error = cv2.fitPlane(copy.deepcopy(
+            #     pm_roi.astype(np.float32)), copy.deepcopy(mask_roi.astype(np.uint8)))
+            plane_center, plane_normal, rms_error = fit_plane(
+                pm_roi, mask_roi)
 
             undistort_pt = undistort_pts[i]
             pt_in_line = np.array([undistort_pt[0], undistort_pt[1], 1])

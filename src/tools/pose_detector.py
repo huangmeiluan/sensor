@@ -2,7 +2,7 @@ import copy
 from src.sensor.frame import Frame
 from IPython import embed
 from src.tools.optimization import compute_rigid_transform
-from src.tools.geometry import to_plane_coeff, intersect_l2p
+from src.tools.geometry import to_plane_coeff, intersect_l2p, fit_plane
 from src.tools.generate_obj_points import generate_obj_points_rvmxn
 from src.tools.find_image_points import find_image_points_rvmxn, CircleDetectorParams
 from enum import Enum
@@ -75,8 +75,10 @@ class PoseDetector:
                 ret = False
                 break
 
-            plane_center, plane_normal, rms_error = cv2.fitPlane(copy.deepcopy(
-                pm_roi.astype(np.float32)), copy.deepcopy(mask_roi.astype(np.uint8)))
+            # plane_center, plane_normal, rms_error = cv2.fitPlane(copy.deepcopy(
+            #     pm_roi.astype(np.float32)), copy.deepcopy(mask_roi.astype(np.uint8)))
+            plane_center, plane_normal, rms_error = fit_plane(
+                pm_roi, mask_roi)
 
             undistort_pt = undistort_pts[i]
             pt_in_line = np.array([undistort_pt[0], undistort_pt[1], 1])

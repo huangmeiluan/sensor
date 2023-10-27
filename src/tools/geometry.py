@@ -57,3 +57,14 @@ def intersect_l2p(plane_center, plane_normal, pt_in_line, line_vec) -> Tuple[boo
     d = np.dot(plane_center - pt_in_line, plane_normal) / dot_pl
     intersect_pt = d * line_vec + pt_in_line
     return True, intersect_pt
+
+
+def fit_plane(pointmap, mask):
+    valid_points = pointmap[mask.astype(bool)]
+    plane_center = np.mean(valid_points, axis=0)
+    sub_points = valid_points - plane_center
+    covariance = np.dot(sub_points.T, sub_points) / valid_points.shape[0]
+    U, S, VT = np.linalg.svd(covariance)
+    plane_normal = VT[2, :]
+    fit_error = np.sqrt(S[2])
+    return plane_center, plane_normal, fit_error
