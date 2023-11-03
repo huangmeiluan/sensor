@@ -70,6 +70,23 @@ class SensorBase:
                         "crop_distance_range_mm", [-5000, 5000]))
                     cv2.cropByPlane(frame.pm, frame.mask, plane_center_mm,
                                     plane_normal, crop_distance_range_mm)
+            if key == "crop_by_box":
+                param = post_process_config[key]
+                if param.get("enable", True):
+                    pose_box = np.array(
+                        param.get("pose", np.eye(4)))
+                    T_pcd_2_box = np.linalg.inv(pose_box)
+                    points = frame.pm.reshape((-1, 3))
+                    extends_xyz = np.array(
+                        param.get("extends_xyz", [500, 500, 500]))
+                    trans_points = np.dot(
+                        T_pcd_2_box[:3, :3], points.T).T + T_pcd_2_box[:3, 3]
+                    mask = np.logical_and(np.abs(trans_points[:, 0]) < extends_xyz[0], np.abs(
+                        trans_points[:, 1]) < extends_xyz[1])
+                    mask = np.logical_and(mask, np.abs(
+                        trans_points[:, 2]) < extends_xyz[2])
+                    mask = mask.reshape(frame.mask.shape)
+                    frame.mask[~mask] = 0
             if key == "dbscan_removal":
                 param = post_process_config[key]
                 if param.get("enable", True):
