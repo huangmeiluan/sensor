@@ -7,6 +7,7 @@ import cv2
 import sys
 from IPython import embed
 from RVBUST import Vis
+import time
 
 if __name__ == "__main__":
     parse = get_common_parse(
@@ -116,3 +117,4 @@ if __name__ == "__main__":
                     print(
                         f"sensor: {sn} has no 'save_as_file_camera' function")
         rotary.step_move(angle_in_deg=args.rotate_angle_deg)
+        time.sleep(0.5)
