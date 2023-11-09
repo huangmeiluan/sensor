@@ -11,6 +11,7 @@ def detect_caliboard_pose(frame, **kwargs):
     if "circle_center_distance" in kwargs:
         pose_detector = PoseDetector()
         pose_detector.circle_center_distance_mm = kwargs["circle_center_distance"]
+        pose_detector.updata_obj_points()
     elif "pose_detector" in kwargs:
         pose_detector = kwargs["pose_detector"]
     else:
@@ -296,7 +297,7 @@ if __name__ == "__main__":
     from IPython import embed
     from RVBUST import Vis
 
-    data_dir = "./data/handEye_1027"
+    data_dir = "/home/rvbust/Downloads/handEye_1027_new/"
     T_robot_end_poses = np.loadtxt(f"{data_dir}/rob_pos.txt")
 
     eye_in_hand = True
